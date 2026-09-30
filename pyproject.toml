@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-token-audit"
+version = "0.1.0"
+description = "Find where your AI agent's tokens go. Local token accounting for Claude Code and Codex session logs."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+
+[project.urls]
+Homepage = "https://github.com/decost-ai/llm-token-audit"
+
+[project.scripts]
+llm-token-audit = "llm_token_audit.__main__:main"
+
+[tool.setuptools]
+packages = ["llm_token_audit"]
