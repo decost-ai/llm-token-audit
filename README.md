@@ -1,9 +1,8 @@
 # llm-token-audit
 
 Find where your AI agent's tokens go. `llm-token-audit` reads Claude Code and Codex session
-logs on your machine and turns them into one row per model attempt, with uncached input, cache
-reads, cache writes, output, and reasoning tokens in separate columns. Only counts leave your
-logs.
+logs on your machine, counts every model attempt once, and prices the result so you can see
+which models, projects, sessions, and token types drive the cost. Only counts leave your logs.
 
 ## Why parse the logs carefully
 
@@ -26,6 +25,9 @@ Requires Python 3.9 or later. No dependencies.
 git clone https://github.com/decost-ai/llm-token-audit
 cd llm-token-audit
 
+# Where the cost goes: token mix, cost by model, project, and session
+python3 -m llm_token_audit report
+
 # Parse statistics, reconciliation results, and token totals
 python3 -m llm_token_audit check
 
@@ -37,6 +39,28 @@ The defaults read `~/.claude/projects` and `~/.codex/sessions`, or the directori
 `CLAUDE_CONFIG_DIR` and `CODEX_HOME`. Point at other locations with `--claude-dir` and
 `--codex-dir`, each repeatable. Limit to one tool with `--source claude-code` or
 `--source codex`.
+
+## The report
+
+`report` prices every attempt with a rates file and shows:
+
+- **Token mix:** uncached input, cache reads, cache writes, output, and reasoning, per tool.
+- **API-equivalent cost** by token type, model, project, and session.
+- **Hidden costs:** the share spent by subagents, and attempts replaced by a model fallback.
+- **Not priced:** usage it could not price, with the reason, so nothing is guessed.
+
+Costs are API-equivalent at the listed rates. They are not what a subscription plan charged,
+and they use the rates in the file, not the rates in effect on the day each request ran.
+`--redact` hashes session IDs and project names before you share the output.
+
+### Rates files
+
+The package bundles a dated rates file read from each provider's pricing page, in
+[`llm_token_audit/rates/`](llm_token_audit/rates/). A model missing from the file shows up
+under "not priced" and is never estimated. Pass your own file with `--rates`, for example to
+add a model or apply a negotiated discount. Each model entry takes per-million-token prices for
+`input`, `cache_read`, `cache_write`, `cache_write_extended`, and `output`, plus optional
+`fast` rates and a `long_context` block used above `short_context_max_input_tokens`.
 
 ## Supported logs
 
@@ -53,6 +77,7 @@ The defaults read `~/.claude/projects` and `~/.codex/sessions`, or the directori
 | --- | --- |
 | `source`, `session_id`, `request_id`, `attempt` | Where the row came from; `attempt` numbers fallback attempts within one response |
 | `timestamp`, `model`, `project` | When, which model, and the working directory's folder name |
+| `speed` | The provider's service speed when logged, such as `standard` or `fast` |
 | `is_subagent` | Whether a subagent made the call |
 | `superseded_attempt` | An attempt replaced by a model fallback |
 | `input_tokens` | Uncached input only |
@@ -73,8 +98,7 @@ before you share a file.
 
 ## Roadmap
 
-- **Audit report:** spend by session and model, stable context against new input, cache hit
-  rate, and repeated large tool outputs, priced with a rates file you supply.
+- **Repeated tool output:** find large tool results that sessions resend on later turns.
 - **More adapters:** each one listed only after it passes a verification like the ones above.
 
 ## License

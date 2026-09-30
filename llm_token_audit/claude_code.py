@@ -102,6 +102,7 @@ def read(dirs: Iterable[Path], stats: Counter) -> Iterator[UsageRecord]:
                 attempt=index,
                 timestamp=response["timestamp"],
                 model=response["model"] if final else None,
+                speed=usage.get("speed"),
                 project=response["project"],
                 is_subagent=response["subagent"],
                 superseded_attempt=not final,

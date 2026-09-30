@@ -14,6 +14,8 @@ class UsageRecord:
     attempt: int
     timestamp: Optional[str]
     model: Optional[str]
+    # Provider service speed when logged ("standard", or a premium mode such as "fast").
+    speed: Optional[str]
     project: Optional[str]
     is_subagent: Optional[bool]
     superseded_attempt: bool

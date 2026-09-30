@@ -11,7 +11,8 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Iterator
 
-from . import __version__, claude_code, codex
+from . import __version__, claude_code, codex, pricing
+from . import report as report_module
 from .record import FIELDS, TOKEN_FIELDS, UsageRecord
 
 ADAPTERS = {"claude-code": claude_code, "codex": codex}
@@ -79,17 +80,25 @@ def check(args: argparse.Namespace) -> None:
             print(f"    {field:30} {totals[source][field]:>14,}{note}")
 
 
+def report(args: argparse.Namespace) -> None:
+    rates = pricing.load(args.rates or pricing.default_rates_path())
+    summary = report_module.build(_records(args, {}), rates)
+    hide = _redact if args.redact else (lambda value: value)
+    print(report_module.render(summary, rates, args.top, hide))
+
+
 def main() -> None:
     if hasattr(signal, "SIGPIPE"):
         # Exit quietly when output is piped into a command that stops reading, such as `head`.
         signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-    parser = argparse.ArgumentParser(prog="llm-token-audit", description="Normalize AI agent session logs into per-attempt token records.")
+    parser = argparse.ArgumentParser(prog="llm-token-audit", description="Find where your AI agent's tokens go.")
     parser.add_argument("--version", action="version", version=__version__)
     commands = parser.add_subparsers(dest="command", required=True)
 
     for name, handler, summary in (
         ("normalize", normalize, "write one row per model attempt"),
         ("check", check, "print parse statistics, reconciliation, and token totals"),
+        ("report", report, "price the attempts and show where the cost goes"),
     ):
         command = commands.add_parser(name, help=summary)
         command.set_defaults(handler=handler)
@@ -100,6 +109,10 @@ def main() -> None:
             command.add_argument("--format", choices=["csv", "jsonl"], default="csv")
             command.add_argument("--redact", action="store_true", help="hash session IDs, request IDs, and project names")
             command.add_argument("-o", "--output", help="write to a file instead of stdout")
+        if name == "report":
+            command.add_argument("--rates", type=Path, help="rates JSON file (default: the newest bundled file)")
+            command.add_argument("--top", type=int, default=10, help="rows to show for projects and sessions")
+            command.add_argument("--redact", action="store_true", help="hash session IDs and project names")
 
     args = parser.parse_args()
     args.handler(args)

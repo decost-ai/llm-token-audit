@@ -92,6 +92,7 @@ def _read_file(path: Path, stats: Counter) -> Iterator[UsageRecord]:
                 attempt=0,
                 timestamp=entry.get("timestamp"),
                 model=model,
+                speed=None,
                 project=project,
                 is_subagent=subagent,
                 superseded_attempt=False,
