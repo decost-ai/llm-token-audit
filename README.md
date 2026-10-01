@@ -16,6 +16,8 @@ Agent session logs look simple and are easy to miscount:
   replaced attempt appears only in a nested field that top-level usage leaves out.
 
 [docs/log-formats.md](docs/log-formats.md) documents each rule with the measurements behind it.
+For what the report found across 91,086 logged calls, see
+[Where AI agent tokens go](https://decost.ai/guides/claude-code-codex-token-usage-measured).
 
 ## Quick start
 
